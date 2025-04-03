@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80" viewBox="0 0 200 80">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#1E40AF" />
+    </linearGradient>
+  </defs>
+  <rect width="170" height="60" rx="10" ry="10" x="15" y="10" fill="url(#gradient)" />
+  <text x="100" y="46" font-family="Arial, sans-serif" font-size="28" font-weight="bold" text-anchor="middle" fill="white">UZIMA</text>
+  <path d="M155 25 L165 25 L165 35" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M45 55 L35 55 L35 45" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="145" cy="25" r="3" fill="white" />
+  <circle cx="55" cy="55" r="3" fill="white" />
+</svg> 
