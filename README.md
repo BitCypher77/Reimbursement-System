@@ -77,22 +77,22 @@ Uzima Expense Management System provides a comprehensive solution for managing c
    - Navigate to the application URL in your browser
    - You should see the login page
 
-## Default Login Credentials
+## Access Credentials
 
-After installation, you can use these default accounts:
+For security reasons, login credentials are not publicly shared in this repository. To get access to the demo system:
 
-| Type            | Email              | Password     |
-| --------------- | ------------------ | ------------ |
-| Administrator   | admin@uzima.com    | Admin@123    |
-| Finance Officer | finance@uzima.com  | Finance@123  |
-| Manager         | manager@uzima.com  | Manager@123  |
-| Employee        | employee@uzima.com | Employee@123 |
+1. **For Collaborators**: Please contact the repository owner to be added as a collaborator to receive secure access credentials
+2. **For Users & Testers**: Submit an access request by opening an issue with the title "Access Request" and including:
+   - Your name and organization
+   - Intended use case
+   - Role needed (Administrator, Finance Officer, Manager, or Employee)
 
-**IMPORTANT**: Change these default passwords immediately after first login!
+We will respond to your request within 48 hours. This approach ensures the system's security while still allowing legitimate users to test and evaluate the software.
+
+**IMPORTANT**: For any granted access, please follow security best practices and never share credentials.
 
 ## Security Recommendations
 
-- Change default credentials immediately
 - Use HTTPS in production
 - Set up regular database backups
 - Update your PHP installation regularly
@@ -129,6 +129,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 For technical support, please contact support@uzima.com or open an issue on our GitHub repository.
+
+## Documentation
+
+For a complete overview of all features and functionality, please download our [Comprehensive User Manual](docs/UZIMA_User_Manual.md).
 
 ---
 

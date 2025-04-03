@@ -1,0 +1,10 @@
+PLACEHOLDER FOR UZIMA USER MANUAL
+
+This file should be replaced with an actual PDF generated from the UZIMA_User_Manual.md file.
+
+To generate the PDF, use a tool like Pandoc with the following command:
+```
+pandoc UZIMA_User_Manual.md -o UZIMA_User_Manual.pdf --toc --toc-depth=3 --highlight-style=tango --variable geometry:margin=1in
+```
+
+The PDF version of the manual should be generated before distributing to end users. 
