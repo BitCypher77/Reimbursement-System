@@ -182,9 +182,7 @@ if (file_exists($company_logo)) {
     <div class="flex min-h-full flex-col justify-center py-6 sm:px-6 lg:px-8 relative">
         <div class="absolute inset-0 bg-gradient-to-r from-primary-600/40 to-secondary-600/40 backdrop-opacity-60 pointer-events-none"></div>
         
-        <div class="flex justify-center items-center relative z-10 mb-4">
-            <?= $logo_html ?>
-        </div>
+        
 
         <div class="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
             <div class="text-center">

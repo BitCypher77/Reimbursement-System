@@ -36,24 +36,24 @@
             <div class="flex items-center gap-6">
                 <!-- Show all navigation options regardless of role -->
                 <?php if ($_SESSION['role'] !== 'Admin'): ?>
-                <a href="<?php echo getRelativePathToRoot(); ?>submit_claim.php" class="hover:text-blue-200 flex items-center gap-1">
+                <a href="submit_claim.php" class="hover:text-blue-200 flex items-center gap-1">
                     <i data-lucide="plus"></i> New Claim
                 </a>
                 <?php endif; ?>
                 
-                <a href="<?php echo getRelativePathToRoot(); ?>reports.php" class="hover:text-blue-200 flex items-center gap-1">
+                <a href="reports.php" class="hover:text-blue-200 flex items-center gap-1">
                     <i data-lucide="line-chart"></i> Reports
                 </a>
                 
-                <a href="<?php echo getRelativePathToRoot(); ?>notifications.php" class="hover:text-blue-200 flex items-center gap-1">
+                <a href="notifications.php" class="hover:text-blue-200 flex items-center gap-1">
                     <i data-lucide="bell"></i> Notifications
                 </a>
                 
-                <a href="<?php echo getRelativePathToRoot(); ?>messages.php" class="hover:text-blue-200 flex items-center gap-1">
+                <a href="messages.php" class="hover:text-blue-200 flex items-center gap-1">
                     <i data-lucide="mail"></i> Messages
                 </a>
                 
-                <a href="<?php echo getRelativePathToRoot(); ?>approvals.php" class="hover:text-blue-200 flex items-center gap-1">
+                <a href="approvals.php" class="hover:text-blue-200 flex items-center gap-1">
                     <i data-lucide="check-circle"></i> Approvals
                 </a>
                 
@@ -70,19 +70,19 @@
                     </button>
                     <div id="userDropdownMenu" class="absolute hidden right-0 mt-2 w-56 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600">
                         <div class="py-1">
-                            <a href="<?php echo getRelativePathToRoot(); ?>profile.php" class="block px-4 py-3 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center">
+                            <a href="profile.php" class="block px-4 py-3 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center">
                                 <i data-lucide="user" class="h-5 w-5 mr-3 text-gray-500 dark:text-gray-400"></i> Profile
                             </a>
                             <?php if ($_SESSION['role'] === 'Admin'): ?>
-                            <a href="<?php echo getRelativePathToRoot(); ?>admin/users.php" class="block px-4 py-3 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center">
+                            <a href="admin/users.php" class="block px-4 py-3 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center">
                                 <i data-lucide="users" class="h-5 w-5 mr-3 text-gray-500 dark:text-gray-400"></i> Manage Users
                             </a>
-                            <a href="<?php echo getRelativePathToRoot(); ?>admin/settings.php" class="block px-4 py-3 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center">
+                            <a href="admin/settings.php" class="block px-4 py-3 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center">
                                 <i data-lucide="settings" class="h-5 w-5 mr-3 text-gray-500 dark:text-gray-400"></i> System Settings
                             </a>
                             <?php endif; ?>
                             <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-                            <a href="<?php echo getRelativePathToRoot(); ?>logout.php" class="block px-4 py-3 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center">
+                            <a href="logout.php" class="block px-4 py-3 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center">
                                 <i data-lucide="log-out" class="h-5 w-5 mr-3 text-red-500 dark:text-red-400"></i> Logout
                             </a>
                         </div>
