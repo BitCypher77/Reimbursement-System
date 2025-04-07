@@ -1,4 +1,312 @@
 <?php
+// db_config.php - Place this in a secure location
+$host = 'localhost';
+$dbname = 'uzima_reimbursement';
+$username = 'root';
+$password = '';
+
+// Create a reusable database connection function
+function connect_db() {
+    global $host, $dbname, $username, $password;
+    
+    try {
+        $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        return $pdo;
+    } catch (PDOException $e) {
+        // Log error to file instead of displaying it
+        error_log("Database connection error: " . $e->getMessage(), 0);
+        return false;
+    }
+}
+
+// Function to validate and sanitize input data
+function sanitize_input($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
+
+// Example function for registering a user
+function register_user($username, $password, $email, $fullName, $role = 'Employee') {
+    try {
+        $pdo = connect_db();
+        
+        if (!$pdo) {
+            return ['success' => false, 'message' => 'Database connection failed'];
+        }
+        
+        // Check if username already exists
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = ? OR email = ?");
+        $stmt->execute([$username, $email]);
+        if ($stmt->fetchColumn() > 0) {
+            return ['success' => false, 'message' => 'Username or email already exists'];
+        }
+        
+        // Hash password for security
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        
+        // Insert new user
+        $stmt = $pdo->prepare("INSERT INTO users (username, password, email, fullName, role) VALUES (?, ?, ?, ?, ?)");
+        $result = $stmt->execute([$username, $hashed_password, $email, $fullName, $role]);
+        
+        if ($result) {
+            return ['success' => true, 'message' => 'User registered successfully', 'userID' => $pdo->lastInsertId()];
+        } else {
+            return ['success' => false, 'message' => 'Registration failed'];
+        }
+    } catch (PDOException $e) {
+        error_log("Registration error: " . $e->getMessage(), 0);
+        return ['success' => false, 'message' => 'An error occurred during registration'];
+    }
+}
+
+// Example function for sending a message
+function send_message($sender_id, $recipient_id, $subject, $message_text) {
+    try {
+        $pdo = connect_db();
+        
+        if (!$pdo) {
+            return ['success' => false, 'message' => 'Database connection failed'];
+        }
+        
+        // Insert message
+        $stmt = $pdo->prepare("INSERT INTO messages (sender_id, recipient_id, subject, message_text) VALUES (?, ?, ?, ?)");
+        $result = $stmt->execute([$sender_id, $recipient_id, $subject, $message_text]);
+        
+        if ($result) {
+            // Also create a notification for the recipient
+            $notify_stmt = $pdo->prepare("INSERT INTO notifications (recipient_id, sender_id, title, message, notification_type, related_id) 
+                                         VALUES (?, ?, ?, ?, ?, ?)");
+            $notify_stmt->execute([
+                $recipient_id, 
+                $sender_id, 
+                "New Message", 
+                "You have received a new message: " . substr($subject, 0, 30) . "...", 
+                "message", 
+                $pdo->lastInsertId()
+            ]);
+            
+            return ['success' => true, 'message' => 'Message sent successfully', 'message_id' => $pdo->lastInsertId()];
+        } else {
+            return ['success' => false, 'message' => 'Failed to send message'];
+        }
+    } catch (PDOException $e) {
+        error_log("Message sending error: " . $e->getMessage(), 0);
+        return ['success' => false, 'message' => 'An error occurred while sending the message'];
+    }
+}
+
+// Example function for submitting a new claim
+function submit_claim($userID, $department_id, $category_id, $amount, $description, $purpose, $incurred_date, $receipt_path = null, $mpesa_code = null, $project_id = null, $billable_to_client = 0) {
+    try {
+        $pdo = connect_db();
+        
+        if (!$pdo) {
+            return ['success' => false, 'message' => 'Database connection failed'];
+        }
+        
+        // Generate unique reference number
+        $reference_number = 'CLAIM-' . date('Ymd') . '-' . rand(1000, 9999);
+        
+        // Insert claim
+        $stmt = $pdo->prepare("INSERT INTO claims (reference_number, userID, department_id, category_id, amount, description, purpose, incurred_date, receipt_path, mpesa_code, project_id, billable_to_client, status) 
+                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Submitted')");
+        
+        $result = $stmt->execute([
+            $reference_number,
+            $userID,
+            $department_id,
+            $category_id,
+            $amount,
+            $description,
+            $purpose,
+            $incurred_date,
+            $receipt_path,
+            $mpesa_code,
+            $project_id,
+            $billable_to_client
+        ]);
+        
+        if ($result) {
+            $claim_id = $pdo->lastInsertId();
+            
+            // Get appropriate workflow and initiate approval process
+            $workflow_stmt = $pdo->prepare("
+                SELECT aw.workflow_id 
+                FROM approval_workflows aw 
+                WHERE (aw.department_id = ? OR aw.department_id IS NULL)
+                AND (aw.category_id = ? OR aw.category_id IS NULL)
+                AND (? <= aw.amount_threshold OR aw.amount_threshold IS NULL)
+                AND aw.status = 'Active'
+                ORDER BY aw.department_id DESC, aw.category_id DESC, aw.amount_threshold DESC
+                LIMIT 1
+            ");
+            
+            $workflow_stmt->execute([$department_id, $category_id, $amount]);
+            $workflow = $workflow_stmt->fetch();
+            
+            if ($workflow) {
+                // Get first approval step
+                $step_stmt = $pdo->prepare("
+                    SELECT step_id, approver_id, approver_role
+                    FROM approval_steps
+                    WHERE workflow_id = ?
+                    ORDER BY step_order ASC
+                    LIMIT 1
+                ");
+                
+                $step_stmt->execute([$workflow['workflow_id']]);
+                $step = $step_stmt->fetch();
+                
+                if ($step) {
+                    $approver_id = $step['approver_id'];
+                    
+                    // If no specific approver, find one based on role and department
+                    if (!$approver_id && $step['approver_role'] == 'Manager') {
+                        $manager_stmt = $pdo->prepare("SELECT manager_id FROM departments WHERE department_id = ?");
+                        $manager_stmt->execute([$department_id]);
+                        $manager = $manager_stmt->fetch();
+                        $approver_id = $manager ? $manager['manager_id'] : null;
+                    } elseif (!$approver_id && $step['approver_role'] == 'FinanceOfficer') {
+                        // Find a finance officer
+                        $finance_stmt = $pdo->prepare("SELECT userID FROM users WHERE role = 'FinanceOfficer' LIMIT 1");
+                        $finance_stmt->execute();
+                        $finance = $finance_stmt->fetch();
+                        $approver_id = $finance ? $finance['userID'] : null;
+                    }
+                    
+                    if ($approver_id) {
+                        // Create approval record
+                        $approval_stmt = $pdo->prepare("
+                            INSERT INTO claim_approvals (claim_id, approver_id, step_id, status)
+                            VALUES (?, ?, ?, 'Pending')
+                        ");
+                        $approval_stmt->execute([$claim_id, $approver_id, $step['step_id']]);
+                        
+                        // Create notification for approver
+                        $notify_stmt = $pdo->prepare("
+                            INSERT INTO notifications (recipient_id, sender_id, title, message, notification_type, related_id)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        ");
+                        $notify_stmt->execute([
+                            $approver_id, 
+                            $userID, 
+                            "New Claim Requires Approval", 
+                            "A new expense claim ($reference_number) requires your approval.", 
+                            "claim_approval", 
+                            $claim_id
+                        ]);
+                    }
+                }
+            }
+            
+            return [
+                'success' => true, 
+                'message' => 'Claim submitted successfully', 
+                'claim_id' => $claim_id, 
+                'reference_number' => $reference_number
+            ];
+        } else {
+            return ['success' => false, 'message' => 'Failed to submit claim'];
+        }
+    } catch (PDOException $e) {
+        error_log("Claim submission error: " . $e->getMessage(), 0);
+        return ['success' => false, 'message' => 'An error occurred while submitting the claim'];
+    }
+}
+
+// Example usage for registration form
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
+    $username = sanitize_input($_POST['username']);
+    $password = $_POST['password']; // Will be hashed in the function
+    $email = sanitize_input($_POST['email']);
+    $fullName = sanitize_input($_POST['fullName']);
+    $role = isset($_POST['role']) ? sanitize_input($_POST['role']) : 'Employee';
+    
+    $result = register_user($username, $password, $email, $fullName, $role);
+    
+    if ($result['success']) {
+        // Redirect to success page or login
+        header("Location: login.php?registered=true");
+        exit();
+    } else {
+        $error_message = $result['message'];
+        // You would typically pass this back to the form
+    }
+}
+
+// Example usage for message form
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
+    // Make sure user is logged in and has a session
+    session_start();
+    if (!isset($_SESSION['userID'])) {
+        header("Location: login.php");
+        exit();
+    }
+    
+    $sender_id = $_SESSION['userID'];
+    $recipient_id = sanitize_input($_POST['recipient_id']);
+    $subject = sanitize_input($_POST['subject']);
+    $message_text = sanitize_input($_POST['message_text']);
+    
+    $result = send_message($sender_id, $recipient_id, $subject, $message_text);
+    
+    if ($result['success']) {
+        header("Location: messages.php?sent=true");
+        exit();
+    } else {
+        $error_message = $result['message'];
+    }
+}
+
+// Example usage for claim submission form
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_claim'])) {
+    session_start();
+    if (!isset($_SESSION['userID'])) {
+        header("Location: login.php");
+        exit();
+    }
+    
+    $userID = $_SESSION['userID'];
+    $department_id = sanitize_input($_POST['department_id']);
+    $category_id = sanitize_input($_POST['category_id']);
+    $amount = floatval(sanitize_input($_POST['amount']));
+    $description = sanitize_input($_POST['description']);
+    $purpose = sanitize_input($_POST['purpose']);
+    $incurred_date = sanitize_input($_POST['incurred_date']);
+    $mpesa_code = isset($_POST['mpesa_code']) ? sanitize_input($_POST['mpesa_code']) : null;
+    $project_id = isset($_POST['project_id']) ? sanitize_input($_POST['project_id']) : null;
+    $billable_to_client = isset($_POST['billable_to_client']) ? 1 : 0;
+    
+    // Handle file upload if receipt is provided
+    $receipt_path = null;
+    if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] == 0) {
+        $upload_dir = 'uploads/receipts/';
+        $file_name = time() . '_' . basename($_FILES['receipt']['name']);
+        $target_file = $upload_dir . $file_name;
+        
+        // Make sure the directory exists
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        
+        if (move_uploaded_file($_FILES['receipt']['tmp_name'], $target_file)) {
+            $receipt_path = $target_file;
+        }
+    }
+    
+    $result = submit_claim($userID, $department_id, $category_id, $amount, $description, $purpose, $incurred_date, $receipt_path, $mpesa_code, $project_id, $billable_to_client);
+    
+    if ($result['success']) {
+        header("Location: claims.php?submitted=true&ref=" . $result['reference_number']);
+        exit();
+    } else {
+        $error_message = $result['message'];
+    }
+}
 // Set custom session path to a directory we have permissions for
 $sessionPath = __DIR__ . '/sessions';
 if (!is_dir($sessionPath)) {

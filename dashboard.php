@@ -401,9 +401,9 @@ if (!$profile_complete) {
                                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"><?= date('M d, g:i A', strtotime($notification['created_at'])) ?></p>
                             </div>
                             <div class="ml-4 flex-shrink-0">
-                                <button data-notification-id="<?= $notification['notification_id'] ?>" 
-                                       class="mark-read-btn text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                                    Mark as read
+                            <button class="mark-read-btn text-sm text-blue-600 dark:text-blue-400 hover:underline">Mark as read</button>
+
+                            <a href="#" class="mark-read-btn text-sm text-blue-600 dark:text-blue-400 hover:underline">Mark as read</a>
                                 </button>
                             </div>
                         </div>

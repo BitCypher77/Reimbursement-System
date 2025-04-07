@@ -28,7 +28,7 @@
 <nav class="bg-blue-600 dark:bg-gray-800 text-white shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16 items-center">
-            <a href="<?php echo getRelativePathToRoot(); ?>dashboard.php" class="flex items-center gap-2">
+            <a href="dashboard.php" class="flex items-center gap-2">
                 <i data-lucide="wallet" class="w-8 h-8"></i>
                 <span class="text-xl font-bold">Uzima</span>
             </a>
